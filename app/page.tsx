@@ -8,6 +8,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<{ id: string; role: string; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const title = `Chat ${new Date().toLocaleString()}`;
 
   // --- Cargar conversaciones al montar ---
   useEffect(() => {
@@ -61,6 +62,35 @@ export default function ChatPage() {
     }
   };
 
+  const handleNewConversation = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/conversations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+         body: JSON.stringify({ title }),
+      });
+      const newConv = await res.json();
+
+      // Actualiza la lista de conversaciones
+    setConversations(prev => [newConv, ...(Array.isArray(prev) ? prev : [])]);
+
+      // Limpia mensajes y activa la nueva conversación
+      setMessages([]);
+      setActiveConversationId(newConv.id);
+      setConversations(prev => {
+        const filtered = prev.filter(c => c.id !== newConv.id);
+        return [newConv, ...filtered];
+      });
+
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar de conversaciones */}
@@ -71,6 +101,12 @@ export default function ChatPage() {
         >
           Cerrar sesión
         </button>
+            <button
+            onClick={handleNewConversation}
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            Nueva conversación
+          </button>
         <h2 className="font-semibold mb-2">Mis conversaciones</h2>
         <ul>
           {conversations.map(c => (
@@ -88,6 +124,7 @@ export default function ChatPage() {
       {/* Panel de chat */}
       <main className="flex-1 flex flex-col p-6">
         <div className="flex-1 overflow-y-auto border rounded-lg p-4 bg-white h-[500px] shadow-sm">
+
           {messages.map(msg => (
             <div
               key={msg.id}
