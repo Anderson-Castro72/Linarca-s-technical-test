@@ -1,75 +1,92 @@
 'use client';
-
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { signOut } from "next-auth/react";
 
 export default function ChatPage() {
-  const [messages, setMessages] = useState<
-    { id: string; role: string; content: string }[]
-  >([]);
+  const [conversations, setConversations] = useState<{ id: string; title?: string }[]>([]);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<{ id: string; role: string; content: string }[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const conversationId = 'default-conversation-id';
+  // --- Cargar conversaciones al montar ---
+  useEffect(() => {
+    fetch('/api/conversations')
+      .then(res => res.json())
+      .then(setConversations)
+      .catch(console.error);
+  }, []);
 
-  async function sendMessage(content: string) {
+  // --- Cargar mensajes de una conversación seleccionada ---
+  const loadConversation = async (conversationId: string) => {
+    setActiveConversationId(conversationId);
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/messages?conversationId=${conversationId}`);
+      const data = await res.json();
+      setMessages(data.messages || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // --- Enviar mensaje ---
+  const sendMessage = async (content: string) => {
+    if (!activeConversationId) return;
+
     const res = await fetch('/api/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ conversationId, content }),
+      body: JSON.stringify({ conversationId: activeConversationId, content }),
     });
 
-    let data;
-    try {
-      data = await res.json();
-    } catch {
-      throw new Error('Error al parsear la respuesta del servidor');
-    }
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || 'Error desconocido');
 
-    if (!res.ok) {
-      throw new Error(data?.error || 'Error desconocido');
-    }
-
-    return data.message;
-  }
+    setMessages(prev => [...prev, { id: Date.now().toString(), role: 'user', content }, data.message]);
+  };
 
   const handleSend = async () => {
     if (!input.trim() || loading) return;
-
-    const userMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: input,
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
     setLoading(true);
-
     try {
-      const assistantMessage = await sendMessage(input);
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error: any) {
-      console.error(error);
-      setMessages(prev => [
-        ...prev,
-        {
-          id: Date.now().toString(),
-          role: 'error',
-          content: error.message || 'Error enviando mensaje',
-        },
-      ]);
+      await sendMessage(input);
+      setInput('');
+    } catch (err: any) {
+      setMessages(prev => [...prev, { id: Date.now().toString(), role: 'error', content: err.message }]);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center p-6">
-      <h1 className="text-2xl font-bold mb-6 text-gray-800">
-        Chat con Gemini 2.5
-      </h1>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar de conversaciones */}
+      <aside className="w-64 border-r p-4">
+        <button
+          onClick={() => signOut({ callbackUrl: "/login" })}
+          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mb-4"
+        >
+          Cerrar sesión
+        </button>
+        <h2 className="font-semibold mb-2">Mis conversaciones</h2>
+        <ul>
+          {conversations.map(c => (
+            <li
+              key={c.id}
+              onClick={() => loadConversation(c.id)}
+              className={`cursor-pointer p-2 rounded ${activeConversationId === c.id ? 'bg-gray-200' : ''}`}
+            >
+              {c.title || "Sin título"}
+            </li>
+          ))}
+        </ul>
+      </aside>
 
-      <div className="w-full max-w-2xl flex flex-col gap-3">
+      {/* Panel de chat */}
+      <main className="flex-1 flex flex-col p-6">
         <div className="flex-1 overflow-y-auto border rounded-lg p-4 bg-white h-[500px] shadow-sm">
           {messages.map(msg => (
             <div
@@ -85,12 +102,7 @@ export default function ChatPage() {
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
           ))}
-
-          {loading && (
-            <div className="text-gray-400 italic text-sm mt-2">
-              Gemini está pensando...
-            </div>
-          )}
+          {loading && <div className="text-gray-400 italic text-sm mt-2">Gemini está pensando...</div>}
         </div>
 
         <div className="flex gap-2 mt-3">
@@ -109,7 +121,7 @@ export default function ChatPage() {
             Enviar
           </button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
