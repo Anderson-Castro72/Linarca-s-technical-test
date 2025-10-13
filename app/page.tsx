@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { signOut } from "next-auth/react";
+import '../styles/globals.css';
 
 export default function ChatPage() {
   const [conversations, setConversations] = useState<{ id: string; title?: string }[]>([]);
@@ -94,47 +95,52 @@ export default function ChatPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar de conversaciones */}
-      <aside className="w-64 border-r p-4">
-        <button
-          onClick={() => signOut({ callbackUrl: "/login" })}
-          className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 mb-4"
-        >
-          Cerrar sesión
-        </button>
-            <button
+        <aside className="w-64 border-r p-4 bg-gradient-to-b from-blue-50 to-white shadow-lg">
+          <button
+            onClick={() => signOut({ callbackUrl: "/login" })}
+            className="w-full mb-4 bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition"
+          >
+            Cerrar sesión
+          </button>
+          <button
             onClick={handleNewConversation}
-            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+            className="w-full mb-6 bg-green-500 text-white px-4 py-2 rounded-lg hover:bg-green-600 transition"
           >
             Nueva conversación
           </button>
-        <h2 className="font-semibold mb-2">Mis conversaciones</h2>
-        <ul>
-          {conversations.map(c => (
-            <li
-              key={c.id}
-              onClick={() => loadConversation(c.id)}
-              className={`cursor-pointer p-2 rounded ${activeConversationId === c.id ? 'bg-gray-200' : ''}`}
-            >
-              {c.title || "Sin título"}
-            </li>
-          ))}
-        </ul>
-      </aside>
+
+          <h2 className="font-bold text-gray-700 mb-3 text-lg">Mis conversaciones</h2>
+          <ul>
+            {conversations.map(c => (
+              <li
+                key={c.id}
+                onClick={() => loadConversation(c.id)}
+                className={`cursor-pointer p-2 rounded-lg mb-1 transition 
+                  ${activeConversationId === c.id ? 'bg-blue-100 font-semibold' : 'hover:bg-gray-100'}`}
+              >
+                {c.title || "Sin título"}
+              </li>
+            ))}
+          </ul>
+        </aside>
+<div className="bg-red-500 text-white p-10 m-10 rounded-lg">
+  ¡Si esto es rojo, Tailwind funciona!
+</div>
+
 
       {/* Panel de chat */}
-      <main className="flex-1 flex flex-col p-6">
-        <div className="flex-1 overflow-y-auto border rounded-lg p-4 bg-white h-[500px] shadow-sm">
-
+      <main className="flex-1 flex flex-col p-6 bg-gray-50">
+        <div className="flex-1 overflow-y-auto border rounded-xl p-4 bg-white shadow-md h-[500px]">
           {messages.map(msg => (
             <div
               key={msg.id}
-              className={`p-3 my-1 rounded-lg max-w-[80%] ${
-                msg.role === 'user'
-                  ? 'bg-blue-100 ml-auto text-right'
+              className={`p-3 my-2 rounded-2xl max-w-[75%] break-words 
+                ${msg.role === 'user'
+                  ? 'bg-blue-500 text-white ml-auto text-right'
                   : msg.role === 'assistant'
-                  ? 'bg-gray-100 text-left'
-                  : 'bg-red-100 text-left'
-              }`}
+                  ? 'bg-gray-200 text-gray-800 text-left'
+                  : 'bg-red-200 text-red-800 text-left'
+                }`}
             >
               <p className="whitespace-pre-wrap">{msg.content}</p>
             </div>
@@ -142,9 +148,9 @@ export default function ChatPage() {
           {loading && <div className="text-gray-400 italic text-sm mt-2">Gemini está pensando...</div>}
         </div>
 
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2 mt-4">
           <input
-            className="flex-1 border rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400"
+            className="flex-1 border rounded-2xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-400 transition"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSend()}
@@ -153,12 +159,13 @@ export default function ChatPage() {
           <button
             onClick={handleSend}
             disabled={loading}
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 rounded-lg transition disabled:opacity-50"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-2xl transition disabled:opacity-50"
           >
             Enviar
           </button>
         </div>
       </main>
+
     </div>
   );
 }
