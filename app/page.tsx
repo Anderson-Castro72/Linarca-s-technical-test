@@ -10,6 +10,15 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const title = `Chat ${new Date().toLocaleString()}`;
   const messagesEndRef = useRef<HTMLDivElement>(null); 
+  const [userName, setUserName] = useState<string | null>(null);
+
+    useEffect(() => {
+      fetch("/api/session")
+        .then(res => res.json())
+        .then(data => setUserName(data?.user?.name || null))
+        .catch(() => setUserName(null));
+    }, []);
+
 
   useEffect(() => {
     if (messagesEndRef.current && !loading) {
@@ -103,7 +112,9 @@ export default function ChatPage() {
     <div className="h-screen bg-gray-100 flex text-gray-800">
       {/* Sidebar */}
       <aside className="w-80 bg-white border-r border-gray-300 flex flex-col p-4 shadow-lg relative">
-        <h2 className="font-bold text-xl text-gray-800 mb-4">Mis conversaciones</h2>
+        <h2 className="font-bold text-xl text-gray-800 mb-4 whitespace-pre-line">
+          {userName ? `Hola, ${userName.split(' ')[0]}\nSoy Gemini 2.5` : 'Mis conversaciones'}
+        </h2>
         
         <button
           onClick={handleNewConversation}
