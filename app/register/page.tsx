@@ -24,7 +24,7 @@ export default function RegisterPage() {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, password: hashed }),
+        body: JSON.stringify(form),
       });
 
       if (res.ok) {
