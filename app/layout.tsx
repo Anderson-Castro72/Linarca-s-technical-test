@@ -1,5 +1,5 @@
 
-import '../styles/globals.css';
+import './globals.css';
 
 export const metadata = {
   title: 'Chat Gemini',
@@ -13,7 +13,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="bg-gray-50 text-gray-800">
+        <body className="bg-gray-50 text-gray-800">
         <main className="flex flex-col min-h-screen">
           {children}
         </main>
