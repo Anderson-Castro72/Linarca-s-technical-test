@@ -20,9 +20,20 @@ export default function ChatPage() {
   useEffect(() => {
     fetch('/api/conversations')
       .then(res => res.json())
-      .then(setConversations)
-      .catch(console.error);
+      .then(data => {
+        const list = Array.isArray(data)
+          ? data
+          : Array.isArray(data.conversations)
+          ? data.conversations
+          : [];
+        setConversations(list);
+      })
+      .catch(err => {
+        console.error("Error cargando conversaciones:", err);
+        setConversations([]);
+      });
   }, []);
+
 
   const loadConversation = async (conversationId: string) => {
     setActiveConversationId(conversationId);
@@ -102,9 +113,9 @@ export default function ChatPage() {
         </button>
 
         <div className="flex-1 overflow-y-auto space-y-1 mb-20">
-          {conversations.map(c => (
+          {Array.isArray(conversations) && conversations.map((c, index) => (
             <div
-              key={c.id}
+              key={c.id ?? `conv-${index}`} // usar index si c.id es indefinido
               onClick={() => loadConversation(c.id)}
               className={`cursor-pointer p-3 rounded-xl transition truncate
                 ${activeConversationId === c.id 
@@ -116,6 +127,7 @@ export default function ChatPage() {
             </div>
           ))}
         </div>
+
 
         <div className="pt-4 border-t border-gray-300 absolute bottom-0 left-0 right-0 p-4 bg-white">
           <button
