@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import bcrypt from "bcryptjs";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -20,7 +19,6 @@ export default function RegisterPage() {
     setLoading(true);
 
     try {
-      const hashed = await bcrypt.hash(form.password, 10);
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
